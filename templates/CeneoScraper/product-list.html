@@ -1,0 +1,20 @@
+{% extends 'CeneoScraper\base.html' %}
+{% load static %}
+
+{% block results %}
+  
+<div class="container">
+
+  <h1 class='display-6'>lista produktów</h1>
+
+  <div class = 'row'>
+    <ul class="list-group">
+    {% for product in product_list %}
+      <li class='list-group-item'>
+        <a href = "{% url 'product_page' product.name %}"> {{ product }}  </a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
+        
