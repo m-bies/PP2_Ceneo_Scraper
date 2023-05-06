@@ -2,19 +2,30 @@
 {% load static %}
 
 {% block results %}
+
+<style>
+  .rightsidediv {
+    text-align: right;
+  }
+</style>
   
 <div class="container">
 
   <h1 class='display-6'>lista produktów</h1>
 
-  <div class = 'row'>
     <ul class="list-group">
     {% for product in product_list %}
+    <div>
       <li class='list-group-item'>
-        <a href = "{% url 'product_page' product.name %}"> {{ product }}  </a>
+        <a href = "{% url 'product_page' product.name %}"> {{ product }}  </a> 
+
+        <div class='container rightsidediv'>
+        {{ product.get_review_count }} reviews | {{ product.get_tolal_advantages }} advantages | {{ product.get_tolal_disadvantages }} disadvantages
+        </div>
       </li>
+    </div>
     {% endfor %}
-  </ul>
+    </ul>
 </div>
 {% endblock %}
         

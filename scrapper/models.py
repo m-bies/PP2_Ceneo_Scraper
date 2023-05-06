@@ -7,6 +7,22 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def get_review_count(self):
+        return self.reviews.count()
+    
+    def get_tolal_advantages(self):
+        count = 0
+        for review in self.reviews.all():
+            count += review.advantages.count()
+        return count
+    
+    def get_tolal_disadvantages(self):
+        count = 0
+        for review in self.reviews.all():
+            count += review.disadvantages.count()
+        return count
+        
 
 
 class Review(models.Model):
@@ -22,6 +38,12 @@ class Review(models.Model):
     vote_up = models.IntegerField()
     vote_down = models.IntegerField()
 
+    def get_advantages_count(self):
+        return self.advantages.count()
+
+    def get_disadvantages_count(self):
+        return self.disadvantages.count()
+    
     def __str__(self):
         
         author = self.author
@@ -37,11 +59,11 @@ class Review(models.Model):
         return f'{author} \n {confirmed} \n {purchase_date} \n {recommendation} \n {rating} \n {review_date} \n {description} \n {vote_up} \n {vote_down}'
 
 class Advantages(models.Model):
-    reviews = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='advantages')
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='advantages')
 
-    advantage = models.TextField(max_length=40, default='', blank=True, null=True)
+    advantage = models.TextField(max_length=40)
 
 class Disadvantages(models.Model):
-    reviews = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='disadvantages')
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='disadvantages')
 
-    disadvantage = models.TextField(max_length=40, default='', blank=True, null=True)
+    disadvantage = models.TextField(max_length=40)

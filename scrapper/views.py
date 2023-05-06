@@ -102,7 +102,7 @@ def extract(request):
                     except:
                         opinion['treść'] = ''
 
-                    review = Review.objects.create(product=product, author=opinion['autor'],
+                    review_entry = Review.objects.create(product=product, author=opinion['autor'],
                                                        rating=opinion['ocena produktu'],
                                                        purchase_date=opinion['data zakupu'],
                                                        review_date=opinion['data opinii'],
@@ -112,20 +112,20 @@ def extract(request):
                     
                     # ?pobieranie zalet i wad
                     try:
-                        positives_section = review.find('div',
-                                                        class_='review-feature__title review-feature__title--positives').findParent()
+                        positives_section = review.find('div', class_='review-feature__title--positives').findParent()
+                        
                         for item in positives_section.find_all('div', class_='review-feature__item'):
-                            print(item)
-                            Advantages.objects.create(reviews=review, advantage=item.text.strip())
-                    except Exception as np:
+                            advantage = item.text.strip()
+                            Advantages.objects.create(review=review_entry, advantage=advantage) 
+                    except:
                         pass
-
+                    
                     try:
-                        negatives_section = review.find('div',
-                                                        class_='review-feature__title review-feature__title--negatives').findParent()
+                        negatives_section = review.find('div', class_='review-feature__title review-feature__title--negatives').findParent()
+
                         for item in negatives_section.find_all('div', class_='review-feature__item'):
-                            Disadvantages.objects.create(reviews=review, disadvantage=item.text.strip())                         
-                    except Exception as nn:
+                            Disadvantages.objects.create(review=review_entry, disadvantage=item.text.strip())                     
+                    except:
                         pass
 
                     
@@ -160,18 +160,13 @@ def extract(request):
 def products(request):
 
     product_list = Product.objects.all()
-
-    output = 'Lista produktów'
-    context = {'output': output, 'product_list': product_list}
-
+    context = {'product_list': product_list}
     return render(request, 'CeneoScraper/product-list.html', context)
 
 
 def product_page(request, productname):
     product = get_object_or_404(Product, name=productname)
-    #reviews = Review.objects.filter(product=product)
-    reviews = Review.objects.filter(product=product).prefetch_related('advantages', 'disadvantages')
-   
+    reviews = Review.objects.filter(product=product)
 
     #?sortowanie
     sort_by = request.GET.get('sort_by', 'review_date')

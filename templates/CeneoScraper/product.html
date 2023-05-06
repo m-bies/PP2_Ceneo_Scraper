@@ -29,7 +29,7 @@
           <div>
             <th><form method='get' action=''> 
               <div class='input-group mb-3'>
-              <input type='text' class='form-control' name='description' aria-describedby="button-addon2" value="{{ request.GET.escription }}">
+              <input type='text' class='form-control' name='description' aria-describedby="button-addon2" value="{{ request.GET.description }}">
               <button class="btn btn-outline-secondary" type="submit" id="button-addon2"><i class="bi bi-search"></i>find</button>
               </div>
             </form>Description</th>
@@ -53,13 +53,8 @@
             <td>{{ review.description }}</td>
             <td>{{ review.vote_up }}</td>
             <td>{{ review.vote_down }}</td>
-            <td>
-              <ul>
-                {% for advantage in review.advantages.all %}
-                  <li>{{ advantage.advantage }}</li>
-                {% endfor %}
-              </ul>
-            </td>
+            <td>{{ review.get_advantages_count}}</td>
+            <td>{{ review.get_disadvantages_count}}</td>
           </tr>
         {% endfor %}
       </tbody>
