@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class Product(models.Model):
     name = models.CharField(max_length=100)
     ceneo_id = models.CharField(max_length=30, unique=True)
@@ -22,9 +21,16 @@ class Product(models.Model):
         for review in self.reviews.all():
             count += review.disadvantages.count()
         return count
+    
+    def get_average(self):
+        total_number = self.reviews.count()
+        ratings = 0
         
+        for review in self.reviews.all():
+            ratings += int(review.rating[0:1])
 
-
+        return round(float(ratings/total_number), 2) 
+    
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
 

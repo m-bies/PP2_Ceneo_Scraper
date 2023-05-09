@@ -2,9 +2,15 @@
 {% load static %}
 
 {% block results %}
-<div class="container nav justify-content-center">
-  <h4 class="mb-3">{{ id }}</h4>
-</div>
+
+<style>
+  .tablecontainer {
+    padding-right: 70px;
+    padding-left: 70px;
+  }
+</style>
+
+
   
 <div class="row justify-content-center">
 
@@ -12,10 +18,16 @@
     
     <div>
       <h1 class='display-6'>{{ productname }}</h1>
+      <div>
+        Pobierz opinie: <a href="{% url 'download' productname %}">csv</a> <a href="{% url 'download_json' productname %}">json</a> <a href="{% url 'download_xlsx' productname %}">xlsx</a>
+      </div>
+      <div>
+        Idź do: <a href="{% url 'charts' productname %}">wykresy</a>
+      </div>
     </div>
   </div>
   
-  <div class='row'>
+  <div class='tablecontainer'>
     <table class='table'>
       <thead>
         <tr>

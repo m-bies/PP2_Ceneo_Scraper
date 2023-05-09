@@ -1,0 +1,31 @@
+{% extends 'CeneoScraper\base.html' %}
+{% load static %}
+
+
+{% block results %}
+
+<style>
+  .tablecontainer {
+    padding-right: 70px;
+    padding-left: 70px;
+  }
+</style>
+
+<div class="row justify-content-center">
+    <div class='row align-items-center'>
+      
+        <div>
+            <h1 class='display-6'>{{ productname }}</h1>
+            Powrót do: <a href = "{% url 'product_page' productname %}">opinie</a>
+        </div>
+          
+        <div class='tablecontainer'>
+
+
+            
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+        
