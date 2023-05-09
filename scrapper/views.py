@@ -1,9 +1,11 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, HttpResponse, get_object_or_404
+from django.http import JsonResponse
 import requests
 from bs4 import BeautifulSoup
 from .models import Product, Review, Advantages, Disadvantages
 import re
-from time import sleep
+import csv
+from openpyxl import Workbook
 
 
 def index(request):
@@ -20,10 +22,10 @@ def extract(request):
         if page.status_code == 200:
             page = requests.get(url)
             soup = BeautifulSoup(page.text, 'html.parser')
+
             try:
                 product_name = soup.find('h1', class_ = 'product-top__product-info__name').text
                 product_name = product_name.replace('/', '_')
-
             except:
                 output = 'produkt nie został znaleziony, upewnij się, że product id jest poprawny'
                 context = {'output': output}
@@ -199,3 +201,115 @@ def product_page(request, productname):
     context = {'productname': product, 'reviews': reviews, 'sort_by': sort_by, 'sort_order': sort_order,}
     
     return render(request, f'CeneoScraper/product.html', context)
+
+def download(request, productname):
+        
+        product = Product.objects.get(name = productname)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{productname}.csv"', 
+
+        writer = csv.writer(response)
+        writer.writerow(['Author', 
+                         'Confirmed', 
+                         'Purchase Date', 
+                         'Recommendation', 
+                         'Rating', 
+                         'Review Date', 
+                         'Description', 
+                         'Vote Up', 
+                         'Vote Down', 
+                         'Advantages', 
+                         'Disadvantages'])
+
+        for review in product.reviews.all():    
+            advantages = ', '.join(advantage.advantage for advantage in review.advantages.all())
+            disadvantages = ', '.join(disadvantage.disadvantage for disadvantage in review.disadvantages.all())
+
+            writer.writerow([
+                review.author,
+                review.confirmed,
+                review.purchase_date,
+                review.recommendation,
+                review.rating,
+                review.review_date,
+                review.description, #.encode(encoding='ascii', errors='ignore')
+                review.vote_up,
+                review.vote_down,
+                advantages,
+                disadvantages])
+
+        return response
+
+def download_json(request, productname):
+    product = Product.objects.get(name = productname)
+    reviews = product.reviews.all()
+    data = []
+
+    for review in reviews:
+        data.append({
+            'author': review.author,
+            'confirmed': review.confirmed,
+            'purchase_date': review.purchase_date,
+            'recommendation': review.recommendation,
+            'rating': review.rating,
+            'review_date': review.review_date,
+            'description': review.description,
+            'vote_up': review.vote_up,
+            'vote_down': review.vote_down,
+            'advantages': [advantage.advantage for advantage in review.advantages.all()],
+            'disadvantages': [disadvantage.disadvantage for disadvantage in review.disadvantages.all()]
+        })
+
+    response = JsonResponse(data, safe=False)
+    response['Content-Disposition'] = f'attachment; filename="{productname}.json"'
+    return response
+
+def download_xlsx(request, productname):
+    product = Product.objects.get(name = productname)
+    reviews = product.reviews.all()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.append(['Author', 'Confirmed', 'Purchase Date', 'Recommendation', 'Rating', 'Review Date', 'Description', 'Vote Up', 'Vote Down', 'Advantages', 'Disadvantages'])
+
+    for review in reviews:
+        advantages = ', '.join([a.advantage for a in review.advantages.all()])
+        disadvantages = ', '.join([d.disadvantage for d in review.disadvantages.all()])
+        ws.append([review.author, 
+                   review.confirmed, 
+                   review.purchase_date, 
+                   review.recommendation, 
+                   review.rating, 
+                   review.review_date, 
+                   review.description, 
+                   review.vote_up, 
+                   review.vote_down, 
+                   advantages,
+                   disadvantages])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename={productname}.xlsx'
+
+    wb.save(response)
+
+    return response
+
+def charts(request, productname):
+
+    product = Product.objects.get(name = productname)
+    reviews = product.reviews.all()
+
+    ratings = []
+    recomendations = []
+
+    for review in reviews:
+        ratings.append(int(review.rating[0:1]))
+        recomendations.append()
+
+    
+
+    
+
+    context = {'productname': productname, 'ratings': ratings}
+    return render(request, 'CeneoScraper/charts.html', context)
