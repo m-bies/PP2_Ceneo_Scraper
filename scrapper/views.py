@@ -41,23 +41,25 @@ def extract(request):
                 product = Product.objects.create(ceneo_id=product_id, name=product_name)
                 
             #?tu zbieram opinie
-            while page:
+            next_page = True
+            while next_page:
 
                 soup = BeautifulSoup(page.text, 'html.parser')
                 reviews_tab = soup.select_one('div.js_product-reviews')
 
+                #!z jakiegoś powodu teraz nie dodaje tylko pierwszą stronę z opiniami
                 try:
-                    reviews = reviews_tab.find_all('div', class_='user-post user-post__card js_product-review')
-                except AttributeError:
+                    all_reviews = reviews_tab.find_all('div', class_='user-post user-post__card js_product-review')
+                except:                    
                     context = {'output': 'Produkt nie posiada opinii'}
                     product.delete()
                     return render(request, 'CeneoScraper\extract-results.html', context)
 
-                for review in reviews:
+                for single_review in all_reviews:
                     opinion = {}
 
                     # ?pobieranie dat
-                    dates_section = review.find('span', class_='user-post__published')
+                    dates_section = single_review.find('span', class_='user-post__published')
                     dates = dates_section.find_all('time')
                     opinion['data opinii'] = dates[0].attrs['datetime']
 
@@ -68,39 +70,39 @@ def extract(request):
 
                     # ?pobieranie czy opinia potwierdzona zakupem?
                     try:
-                        opinion['wiarygodność'] = review.find('div', class_='review-pz').text.strip()
+                        opinion['wiarygodność'] = single_review.find('div', class_='review-pz').text.strip()
                     except Exception as nd:
                         opinion['wiarygodność'] = 'Opinia nie jest potwierdzona zakupem'
 
                     # ?pobieranie pozostałych
                     try:
-                        opinion['autor'] = review.find('span', class_='user-post__author-name').text.strip()
+                        opinion['autor'] = single_review.find('span', class_='user-post__author-name').text.strip()
                     except:
                         opinion['autor'] = ''
 
                     try:
-                        opinion['rekomendacja'] = review.find('span',
+                        opinion['rekomendacja'] = single_review.find('span',
                                                               class_='user-post__author-recomendation').findChild().text.strip()
                     except:
                         opinion['rekomendacja'] = ''
 
                     try:
-                        opinion['ocena produktu'] = review.find('span', class_='user-post__score-count').text.strip()
+                        opinion['ocena produktu'] = single_review.find('span', class_='user-post__score-count').text.strip()
                     except:
                         opinion['ocena produktu'] = ''
 
                     try:
-                        opinion['+1'] = int(review.find('span', id=re.compile('votes-yes*')).text.strip())
+                        opinion['+1'] = int(single_review.find('span', id=re.compile('votes-yes*')).text.strip())
                     except:
                         pass
 
                     try:
-                        opinion['-1'] = int(review.find('span', id=re.compile('votes-no*')).text.strip())
+                        opinion['-1'] = int(single_review.find('span', id=re.compile('votes-no*')).text.strip())
                     except:
                         pass
 
                     try:
-                        opinion['treść'] = review.find('div', class_='user-post__text').text.strip()
+                        opinion['treść'] = single_review.find('div', class_='user-post__text').text.strip()
                     except:
                         opinion['treść'] = ''
 
@@ -114,7 +116,7 @@ def extract(request):
                     
                     # ?pobieranie zalet i wad
                     try:
-                        positives_section = review.find('div', class_='review-feature__title--positives').findParent()
+                        positives_section = single_review.find('div', class_='review-feature__title review-feature__title--positives').findParent()
                         
                         for item in positives_section.find_all('div', class_='review-feature__item'):
                             advantage = item.text.strip()
@@ -123,28 +125,21 @@ def extract(request):
                         pass
                     
                     try:
-                        negatives_section = review.find('div', class_='review-feature__title review-feature__title--negatives').findParent()
+                        negatives_section = single_review.find('div', class_='review-feature__title review-feature__title--negatives').findParent()
 
                         for item in negatives_section.find_all('div', class_='review-feature__item'):
                             Disadvantages.objects.create(review=review_entry, disadvantage=item.text.strip())                     
                     except:
                         pass
-
-                    
-                    
+  
                 # ?sprawdzanie czy następna strona istenieje
                 try:
                     nextpage = soup.find('a', class_='pagination__item pagination__next').attrs['href']
-                except:
-                    ValueError
-                    nextpage = None
-
-                # ?wygenerowanie kolejnej strony
-                if nextpage != None:
                     page = requests.get(f'https://ceneo.pl{nextpage}')
-                else:
-                    break
-            
+                    
+                except:
+                    next_page = False
+                                
             
             context = {'output': 'produkt dodany do bazy'}
             return render(request, 'CeneoScraper/extract-results.html', context)

@@ -28,8 +28,12 @@ class Product(models.Model):
         
         for review in self.reviews.all():
             ratings += int(review.rating[0:1])
-
-        return round(float(ratings/total_number), 2) 
+        
+        try:
+            result = round(float(ratings/total_number), 2)
+        except:
+            result = ''
+        return result
     
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
